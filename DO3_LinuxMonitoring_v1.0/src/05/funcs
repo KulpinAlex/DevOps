@@ -1,0 +1,66 @@
+function total_folders {
+    echo ""
+    var1=$(find "$1" -type d | wc -l)
+    echo "Total number of folders (including all nested ones) = $var1"
+}
+
+function top_five_folders {
+    echo ""
+    echo "TOP 5 folders of maximum size arranged in descending order (path and size):"
+    echo "$(du "$1" -h | sort -rh | head -5 | awk '{print NR, "- " $2,$3,$4,$5,$6,$7,$8,$9, $1}')"
+}
+
+function number_files {
+    echo ""
+    var2=$(find "$1" -type f | wc -l)
+    echo "Total number of files = $var2"
+}
+
+function number_some_files {
+    echo ""
+    echo "Number of:"
+    var3=$(find "$1" -type f -exec file -b "{}" \;)
+    var2=$(find "$1" -type f | grep \\.conf$ | wc -l)
+    echo "Configuration files (with the .conf extension) = $var2"
+    echo "Text files = $(echo "$var3" | grep text | wc -l)"
+    var4=$(find "$1" -type f -executable | wc -l)
+    echo "Executable files = $var4"
+    var5=$(find "$1" -type f | grep \\.log$ | wc -l)
+    echo "Log files (with the extension .log) = $var5"
+    echo "Archive files = $(echo "$var3" | grep archive | wc -l)"
+    var7=$(find "$1" -type l | wc -l)
+    echo "Symbolic links = $var7"
+}
+
+function top_ten_files {
+    echo ""
+    echo "TOP 10 files of maximum size arranged in descending order (path, size and type):"
+    for ((i=1; i <= 10; i++))
+    do
+    vartest2=$(find "$1" -type f -exec du -ah '{}' \; | sort -rh | head -10 | sed 's/.*\t//' | awk 'NR == '$i'')
+    if ! [ -n "$vartest2" ]
+    then
+    break;
+    fi
+    vartest1=$(file -bi "$vartest2" | sed 's/;.*//')
+    vartest3=$(find "$1" -type f -exec du -ah '{}' \; | sort -rh | head -10 | awk 'NR == '$i' {print $1}')
+    echo "$i -" $vartest2, $vartest3, $vartest1
+    done
+}
+
+function top_ten_exe_files {
+    echo ""
+    echo "TOP 10 executable files of the maximum size arranged in descending order (path, size and MD5 hash of file):"
+    for ((i=1; i <= 10; i++))
+    do
+    vartest22=$(find "$1" -type f -executable -exec du -ah '{}' \; | sort -rh | head -10 | sed 's/.*\t//' | awk 'NR == '$i'')
+    if ! [ -n "$vartest22" ]
+    then
+    break;
+    fi
+    vartest33=$(find "$1" -type f -executable -exec du -ah '{}' \; | sort -rh | head -10 | awk 'NR == '$i' {print $1}')
+    vartest11=$(md5sum "$vartest22" | awk '{print $1}')
+    echo "$i -" $vartest22, $vartest33, $vartest11
+    done
+    echo ""
+}

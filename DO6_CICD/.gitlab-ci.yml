@@ -1,0 +1,47 @@
+stages:
+  - build
+  - style
+  - test
+  - deploy
+
+cat_grep_build:
+  stage: build
+  script:
+      - cd src/cat; make
+      - cd ../grep; make
+  artifacts:
+      paths:
+      - src/cat/s21_cat
+      - src/grep/s21_grep
+      expire_in: 30 days
+  after_script:
+      - ./send_mess_tg.sh
+
+style_test:
+  stage: style
+  script:
+      - clang-format -style=google -n src/*/*.c src/*/*.h -Werror
+  after_script:
+      - echo $CI_JOB_STATUS
+      - ./send_mess_tg.sh
+
+integration_tests:
+  stage: test
+  script:
+      - cd src/cat/; ./cat_test.sh
+      - cd ../grep; ./grep_test.sh
+  after_script:
+      - echo $CI_JOB_STATUS
+      - ./send_mess_tg.sh
+
+deploy_artifacts:
+  stage: deploy
+  when: manual
+  allow_failure: false
+  dependencies:
+      - cat_grep_build
+  script:
+      - scp src/cat/s21_cat src/grep/s21_grep ubu-cd:/usr/local/bin/
+  after_script:
+      - ./send_mess_tg.sh
+

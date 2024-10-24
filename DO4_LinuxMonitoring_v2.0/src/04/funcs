@@ -1,0 +1,80 @@
+function generate_ip {
+    random_ip="$((1 + $RANDOM % 255)).$((1 + $RANDOM % 255)).$((1 + $RANDOM % 255)).$((1 + $RANDOM % 255))"
+    echo $random_ip 
+}
+
+function generate_response {
+    response_codes=(
+        200 #запрос успешно обработан
+        201 #Запрос успешно выполнен и в результате был создан ресурс
+        400 #Этот ответ означает, что сервер не понимает запрос из-за неверного синтаксиса.
+        401 #Для получения запрашиваемого ответа нужна аутентификация.
+        403 #У клиента нет прав доступа к содержимому
+        404 #Сервер не может найти запрашиваемый ресурс. 
+        500 #Внутренняя ошибка сервера
+        501 #Метод запроса не поддерживается сервером и не может быть обработан.
+        502 #Cервер, во время работы в качестве шлюза для получения ответа, нужного для обработки запроса, получил недействительный ответ.
+        503 #Сервер не готов обрабатывать запрос.
+    )
+    num=$(($RANDOM % ${#response_codes[*]}))
+    echo ${response_codes[$num]}
+}
+
+function generate_metod {
+    metod_answer=(
+        GET
+        POST
+        PUT
+        PATCH
+        DELETE
+    )
+    num=$(($RANDOM % ${#metod_answer[*]}))
+    echo ${metod_answer[$num]}
+}
+
+function generate_agent {
+    agent=(
+        "Mozilla"
+        "Google Chrome"
+        "Opera"
+        "Safari"
+        "Internet Explorer"
+        "Microsoft Edge"
+        "Crawler and bot"
+        "Library and net tool"
+    )
+    num=$(($RANDOM % ${#agent[*]}))
+    echo ${agent[$num]}
+}
+
+function generate_agent_URL {
+    agent_URL=(
+        "https://www.google.ru/"
+        "https://ya.ru/"
+        "https://edu.21-school.ru/"
+        "https://2gis.ru/"
+        "https://www.sberbank.ru/"
+        "https://nsk.mts.ru/"
+        "https://www.rambler.ru/"
+        "https://ngs.ru/"
+    )
+    num=$(($RANDOM % ${#agent_URL[*]}))
+    echo ${agent_URL[$num]}
+}
+
+function generate_time {
+    temp=$((5 + $RANDOM % 55))
+    print_date=$(date --date "$1 $temp seconds" '+%d/%b/%Y:%H:%M:%S %z')
+    test=$(date --date "$1 $temp seconds" '+%m/%d/%Y %H:%M:%S')
+}
+
+function generate_http_code {
+    HTTP_code=(
+        "HTTP/0.9"
+        "HTTP/1.0"
+        "HTTP/1.1"
+        "HTTP/2"
+    )
+    num=$(($RANDOM % ${#HTTP_code[*]}))
+    echo ${HTTP_code[$num]}
+}

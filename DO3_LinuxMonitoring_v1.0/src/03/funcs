@@ -1,0 +1,91 @@
+function host_time_usr {
+    echo -e "$1HOSTNAME\033[0m\t= $2$(hostname)\033[0m"
+    var1=$(timedatectl | awk '/Time zone:/' | sed -e 's/.*: //; s/ (.*//')
+    var2=$(timedatectl | awk '/Time zone:/' | sed -e 's/.*(+//; s/,.*//')
+    [ "$var2" -eq "$var2" ] 2>/dev/null
+    if [ $? -ne 0 ]
+    then
+    echo -e "$1TIMEZONE\033[0m\t= $2$var1 UTC +0\033[0m"
+    else
+    echo -e "$1TIMEZONE\033[0m\t= $2$var1 UTC +$(printf "%d\n" $var2)\033[0m"
+    fi
+    echo -e "$1USER\033[0m\t\t= $2$(whoami)\033[0m"
+}
+
+function operating_system {
+    echo -e "$1OS\033[0m\t\t= $2$(lsb_release -a 2>/dev/null | awk '/Description:/' | sed 's/.*:\t//')\033[0m"
+}
+
+function print_date {
+    echo -e "$1DATE\033[0m\t\t= $2$(date +%e\ %b\ %Y\ %T)\033[0m"
+}
+
+function print_uptime {
+    echo -e "$1UPTIME\033[0m\t\t= $2$(uptime -p | sed 's/,//')\033[0m"
+    echo -e "$1UPTIME_SEC\033[0m\t= $2$(printf "%g\n" $(cat /proc/uptime | awk '{print $1}' | sed 's/\..*//'))\033[0m"
+}
+
+function print_ip_mask_gate {
+    var=$(hostname -I | awk '{print $1}')
+    echo -e "$1IP\033[0m\t\t= $2$var\033[0m"
+    echo -e "$1MASK\033[0m\t\t= $2$(ifconfig | grep mask | grep $var | awk '{print $4}')\033[0m"
+    echo -e "$1GATEWAY\033[0m\t\t= $2$(ip r | grep default | awk '{print $3}')\033[0m"
+}
+
+function print_ram {
+    var1=$(free --mega | awk 'NR == 2 {print $2}')
+    var2=$(free --mega | awk 'NR == 2 {print $3}')
+    var3=$(free --mega | awk 'NR == 2 {print $4}')
+    echo -e "$1RAM_TOTAL\033[0m\t= $2$(echo "scale=3; $var1/1000" | bc) GB\033[0m"
+    echo -e "$1RAM_USED\033[0m\t= $2$(echo "scale=3; $var2/1000" | bc) GB\033[0m"
+    echo -e "$1RAM_FREE\033[0m\t= $2$(echo "scale=3; $var3/1000" | bc) GB\033[0m"
+}
+
+function print_space {
+    var1=$(df -BKB | grep /$ | awk '{print $2}' | sed 's/kB//')
+    var2=$(df -BKB | grep /$ | awk '{print $3}' | sed 's/kB//')
+    var3=$(df -BKB | grep /$ | awk '{print $4}' | sed 's/kB//')
+    echo -e "$1SPACE_ROOT\033[0m      = $2$(echo "scale=2; $var1/1000" | bc) MB\033[0m"
+    echo -e "$1SPACE_ROOT_USED\033[0m = $2$(echo "scale=2; $var2/1000" | bc) MB\033[0m"
+    echo -e "$1SPACE_ROOT_FREE\033[0m = $2$(echo "scale=2; $var3/1000" | bc) MB\033[0m"
+}
+
+
+#1 - white, 2 - red, 3 - green, 4 - blue, 5 – purple, 6 - black
+function colour_key {
+    case "$1" in 
+    "1" ) col1="47";;
+    "2" ) col1="41";;
+    "3" ) col1="42";;
+    "4" ) col1="44";;
+    "5" ) col1="45";;
+    "6" ) col1="40";;
+esac
+
+    case "$2" in 
+    "1" ) col2="37m";;
+    "2" ) col2="31m";;
+    "3" ) col2="32m";;
+    "4" ) col2="34m";;
+    "5" ) col2="35m";;
+    "6" ) col2="30m";;
+esac
+
+    case "$3" in 
+    "1" ) col3="47";;
+    "2" ) col3="41";;
+    "3" ) col3="42";;
+    "4" ) col3="44";;
+    "5" ) col3="45";;
+    "6" ) col3="40";;
+esac
+
+    case "$4" in 
+    "1" ) col4="37m";;
+    "2" ) col4="31m";;
+    "3" ) col4="32m";;
+    "4" ) col4="34m";;
+    "5" ) col4="35m";;
+    "6" ) col4="30m";;
+esac
+}

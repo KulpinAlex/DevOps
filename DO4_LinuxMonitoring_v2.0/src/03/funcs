@@ -1,0 +1,47 @@
+function check_arguments {
+    [[ $# -eq 1 && $1 =~ ^[1-3]$ ]] ||
+    [[ $# -ge 1 && $1 -eq 2 ]]
+}
+
+function check_date {
+    mask_date='^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}\ [0-9]{1,2}:[0-9]{1,2}$'
+    if [[ $(date --date="$1") && $(date --date="$2") &&
+         $1 =~ $mask_date && $2 =~ $mask_date ]]; then
+        if [[ $(date --date="$2" +%s) -ge $(date --date="$1" +%s) ]]; then
+            clean_by_date "$1" "$2"
+        else
+            echo Начальная дата позже конечной
+        fi
+    else
+        echo Введите дату и время в правильном формате: '(MM/DD/YYYY HH:MM)'
+    fi
+}
+
+function clean_by_logfile {
+    for line in $(cat ../02/script.log | awk -F' - ' '{print $1}'); do
+        rm -rf "$line"
+    done
+}
+
+function clean_by_mask {
+    mask='.*/[a-zA-Z]{1,}_[0-9]{6}$'
+    paths="$(find / | grep -E "$mask")"
+    result_list=()
+    for path in "$paths"; do
+        result_list+=($path)
+    done
+    for i in "${!result_list[@]}"; do
+        rm -rf "${result_list[$i]}"
+    done
+}
+
+function clean_by_date {
+    paths="$(find / -newermt "$1" ! -newermt "$2")"
+    result_list=()
+    for path in "$paths"; do
+        result_list+=($path)
+    done
+    for i in "${!result_list[@]}"; do
+        rm -rf "${result_list[$i]}"
+    done
+}

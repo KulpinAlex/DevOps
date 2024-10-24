@@ -1,0 +1,124 @@
+function check_arguments {
+    [[ $# -eq 3 && 
+    $1 =~ ^([a-zA-Z]{1,7})$ && 
+    $2 =~ ^([a-zA-Z]{1,7})\.([a-zA-Z]{1,3})$ && 
+    $3 =~ ^([0-9]{1,3})Mb$ && 
+    $(echo $3 | sed 's/Mb//') -le 100 
+    ]]
+}
+
+function gen_names {
+    count=0
+    point=0
+    if [[ ${2:0:1} == ${2: -1} ]]; then
+        point=1
+    fi
+    result_names=()
+    NOW="$(date +"%d%m%y")"
+    if [[ $point -eq 1 ]]; then
+        temp=$2
+        for ((i = ${#2}; i < 5; ++i)); do
+            temp+=${2: -1}
+        done
+        for ((i = 0; i < $1; ++i)); do
+            result_names+=($temp\_$NOW$3)
+            temp+=${2: -1}
+            ((++count))
+        done
+    else
+        declare -A temp
+        if [[ ${#2} -eq 2 ]]; then
+            temp[$(echo 0,0)]=${2:0:1}${2:0:1}${2:0:1}$2
+            temp[$(echo 0,1)]=${2:0:1}${2:0:1}$2${2: -1}
+            temp[$(echo 0,2)]=${2:0:1}$2${2: -1}${2: -1}
+            temp[$(echo 0,3)]=$2${2: -1}${2: -1}${2: -1}
+            for ((i = 0; i < 4; ++i)); do
+                result_names+=(${temp[0,$i]}\_$NOW$3)
+                ((++count))
+                if [[ $i+1 -eq $1 ]]; then
+                   break
+                fi
+            done
+            point=4
+        elif [[ ${#2} -eq 3 ]]; then
+            temp[$(echo 0,0)]=${2:0:1}${2:0:1}$2
+            temp[$(echo 0,1)]=${2:0:1}$2${2: -1}
+            temp[$(echo 0,2)]=$2${2: -1}${2: -1}
+            for ((i = 0; i < 3; ++i)); do
+                result_names+=(${temp[0,$i]}\_$NOW$3)
+                ((++count))
+                if [[ $i+1 -eq $1 ]]; then
+                   break
+                fi
+            done
+            point=3
+        elif [[ ${#2} -eq 4 ]]; then
+            temp[$(echo 0,0)]=${2:0:1}$2
+            temp[$(echo 0,1)]=$2${2: -1}
+            for ((i = 0; i < 2; ++i)); do
+                result_names+=(${temp[0,$i]}\_$NOW$3)
+                ((++count))
+                if [[ $i+1 -eq $1 ]]; then
+                   break
+                fi
+            done
+            point=2
+        else
+            temp[$(echo 0,0)]=$2
+            result_names+=(${temp[0,0]}\_$NOW$3)
+            ((++count))
+            point=1
+        fi
+        if [[ $1 -gt $count ]]; then
+            for ((i = 1; ; ++i)); do
+                for ((j = 0; j < i+$point; ++j)); do
+                    if [[ j -eq 0 ]]; then
+                        temp[$(echo $i,$j)]=${2:0:1}${temp[$(echo $((i-1)),$j)]}
+                        result_names+=(${temp[$(echo $i,$j)]}\_$NOW$3)
+                    else
+                        temp[$(echo $i,$j)]=${temp[$(echo $((i-1)),$((j-1)))]}${2: -1}
+                        result_names+=(${temp[$(echo $i,$j)]}\_$NOW$3)
+                    fi
+                    ((++count))
+                    if [[ $count -eq $1 ]]; then
+                        break
+                    fi
+                done
+                if [[ $count -eq $1 ]]; then
+                    break
+                fi
+            done
+        fi
+    fi
+}
+
+
+function create_files {
+    $(touch script.log)
+    for i in ${!folder_names[@]}; do
+        count=0
+        size=$(df / | tail -1 | awk '{print $4}')
+        if [[ $size -le 1000000 ]]; then
+            break
+        fi
+        $(mkdir -p "$1"/${folder_names[$i]})
+        if [[ -d "$1"/${folder_names[$i]} ]]; then
+            echo "$(realpath "$1"/${folder_names[$i]}) - $(date +"%d.%m.%y %T")" >> script.log
+        fi
+        for t in ${!file_names[@]}; do
+            if [[ $3 -le $count ]]; then
+                break
+            fi
+            size=$(df / | tail -1 | awk '{print $4}')
+            if [[ $size -le 1000000 ]]; then
+                break
+            fi
+            $(fallocate -l $2 "$1/${folder_names[$i]}/${file_names[$t]}")
+            if [[ -e "$1"/${folder_names[$i]}/${file_names[$t]} ]]; then
+                file_size=$(du --apparent-size --block-size=1000 "$1"/${folder_names[$i]}/${file_names[$t]}  | awk '{print $1}')
+                echo "$(realpath "$1"/${folder_names[$i]}/${file_names[$t]}) - $(date +"%d.%m.%y %T") - $file_size kb" >> script.log
+            fi
+            ((++count))
+        done
+    done
+}

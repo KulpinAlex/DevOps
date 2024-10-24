@@ -1,0 +1,27 @@
+function check_arguments {
+    [[ $# -eq 1 && $1 =~ ^[1-4]$ ]]
+}
+
+function sort_by_response_code {
+    for i in 0 1 2 3 4; do
+        awk '{print $0 | "sort -k 9" }' ../04/file_$i.log > sort_response_code_$i.log
+    done
+}
+
+function unique_ip {
+    for i in 0 1 2 3 4; do
+        awk '{print $1 | "uniq -d" }' ../04/file_$i.log > unique_ip_$i.log
+    done
+}
+
+function error_code {
+    for i in 0 1 2 3 4; do
+        awk '$9 ~ /^[45]/ {print $0}' ../04/file_$i.log > error_code_$i.log
+    done
+}
+
+function error_code_unique_ip {
+    for i in 0 1 2 3 4; do
+        awk '$9 ~ /^[45]/ {print $0}' ../04/file_$i.log | awk '{print $1 | "uniq -u" }' > error_code_unique_ip_$i.log
+    done
+}

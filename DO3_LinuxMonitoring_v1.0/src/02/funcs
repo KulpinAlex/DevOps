@@ -1,0 +1,61 @@
+function host_time_usr {
+    echo HOSTNAME = $(hostname)
+    var1=$(timedatectl | awk '/Time zone:/' | sed -e 's/.*: //; s/ (.*//')
+    var2=$(timedatectl | awk '/Time zone:/' | sed -e 's/.*(+//; s/,.*//')
+    [ "$var2" -eq "$var2" ] 2>/dev/null
+    if [ $? -ne 0 ]
+    then
+    echo TIMEZONE = $var1 UTC "+0"
+    else
+    echo TIMEZONE = $var1 UTC "+"$(printf "%d\n" $var2)
+    fi
+    echo USER = $(whoami)
+}
+
+function operating_system {
+    echo OS = $(lsb_release -a 2>/dev/null | awk '/Description:/' | sed 's/.*:\t//')
+}
+
+function print_date {
+    echo DATE = $(date +%e\ %b\ %Y\ %T)
+}
+
+function print_uptime {
+    echo UPTIME = $(uptime -p | sed 's/,//')
+    echo UPTIME_SEC = $(printf "%g\n" $(cat /proc/uptime | awk '{print $1}' | sed 's/\..*//'))
+}
+
+function print_ip_mask_gate {
+    var=$(hostname -I | awk '{print $1}')
+    echo IP = $var
+    echo MASK = $(ifconfig | grep mask | grep $var | awk '{print $4}')
+    echo GATEWAY = $(ip r | grep default | awk '{print $3}')
+}
+
+function print_ram {
+    var1=$(free --mega | awk 'NR == 2 {print $2}')
+    var2=$(free --mega | awk 'NR == 2 {print $3}')
+    var3=$(free --mega | awk 'NR == 2 {print $4}')
+    echo RAM_TOTAL = $(echo "scale=3; $var1/1000" | bc) GB
+    echo RAM_USED = $(echo "scale=3; $var2/1000" | bc) GB
+    echo RAM_FREE = $(echo "scale=3; $var3/1000" | bc) GB
+}
+
+function print_space {
+    var1=$(df -BKB | grep /$ | awk '{print $2}' | sed 's/kB//')
+    var2=$(df -BKB | grep /$ | awk '{print $3}' | sed 's/kB//')
+    var3=$(df -BKB | grep /$ | awk '{print $4}' | sed 's/kB//')
+    echo SPACE_ROOT =  $(echo "scale=2; $var1/1000" | bc) MB
+    echo SPACE_ROOT_USED = $(echo "scale=2; $var2/1000" | bc) MB
+    echo SPACE_ROOT_FREE = $(echo "scale=2; $var3/1000" | bc) MB
+}
+
+function create_file {
+    read -p "Записать данные в файл?(Y/N) " var
+    exec 2>/dev/null
+    if [ $var = "Y" ] || [ $var = "y" ]
+    then
+    $(cat $logFile>"$(date +%d_%m_%y_%H_%M_%S.status)")
+    fi
+    $(rm $logFile)
+}

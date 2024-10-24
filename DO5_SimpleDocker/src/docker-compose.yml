@@ -1,0 +1,16 @@
+services:  
+  client:
+    depends_on:
+      - server
+    build:
+      context: ./server6
+      dockerfile: Dockerfile
+    container_name: client_part6
+    ports:
+      - 80:8080
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile_part5
+    container_name: server_part6

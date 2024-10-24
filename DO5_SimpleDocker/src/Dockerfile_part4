@@ -1,0 +1,11 @@
+FROM nginx
+
+RUN apt update && \
+    apt install -y \
+    gcc \
+    spawn-fcgi \
+    libfcgi-dev
+
+COPY ./nginx/nginx.conf /etc/nginx/
+COPY ./server/server.c /home/
+COPY ./start.sh ./docker-entrypoint.d/start.sh
